@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基于多模态大模型的心脏MRI智能诊断Agent系统</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=36">
+</head>
+
+<body>
+  <div class="app-container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">🏥</div>
+        <div class="logo-text">
+          <h1>基于多模态大模型的心脏MRI智能诊断Agent系统</h1>
+          <span>智能心脏磁共振影像分析平台</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-indicator">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">正在检查连接...</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <h3>检查类型</h3>
+          <div class="task-selector">
+            <button class="task-btn active" data-task="mr">
+              <span class="icon">◉</span>
+              <span>MR</span>
+            </button>
+            <button class="task-btn disabled" data-task="ct" disabled>
+              <span class="icon">☢️</span>
+              <span>CT</span>
+            </button>
+            <button class="task-btn disabled" data-task="us" disabled>
+              <span class="icon">📶</span>
+              <span>US</span>
+            </button>
+            <button class="task-btn disabled" data-task="ecg" disabled>
+              <span class="icon">📈</span>
+              <span>ECG</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="sidebar-section upload-mini">
+          <h3>上传文件</h3>
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="fileInput" multiple accept=".zip,.nii,.nii.gz,.gz,.png,.jpg,.jpeg,.gif,.webp">
+            <div class="upload-icon">📦</div>
+            <div><strong>点击上传</strong> 或拖拽文件</div>
+            <p>支持 .zip (DCM)、.nii.gz、.png、.jpg 格式</p>
+          </div>
+          <div class="file-list" id="fileList"></div>
+          <button class="clear-all-btn" id="clearAllBtn" style="display: none;">清除所有文件</button>
+        </div>
+
+        <div class="sidebar-section history-section">
+          <h3>历史记录</h3>
+          <div class="history-list" id="historyList">
+            <div class="history-empty" id="historyEmpty">暂无历史记录</div>
+          </div>
+        </div>
+
+        <div class="sidebar-section sidebar-footer">
+          <div class="session-info" id="sessionInfo">
+            会话 ID：<span class="session-id" id="currentSessionId">未创建</span>
+          </div>
+          <div class="cache-actions">
+            <button class="cache-btn" onclick="createNewSession()">＋ 新建会话</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 图片预览模态框 -->
+      <div class="modal-overlay" id="imageModal" onclick="closeImageModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <button class="modal-close" onclick="closeImageModal()">×</button>
+          <img id="modalImage" src="" alt="Preview">
+          <div class="modal-info" id="modalInfo"></div>
+        </div>
+      </div>
+
+      <section class="chat-panel">
+        <div class="chat-header">
+          <h2>💬 对话</h2>
+          <button class="quick-prompt" onclick="clearChat()">清空对话</button>
+        </div>
+        
+        <div class="processing-bar" id="processingBar">
+          <div class="progress"></div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <template id="welcomeTemplate">
+          <div class="message bot">
+            <div class="message-content">
+              您好！我是<strong>心脏MRI智能诊断Agent</strong>，您的心脏磁共振影像智能分析助手。
+              <br><br>
+              我支持以下自动化任务：
+              <br>
+              🔹 <strong>分割</strong> - 2CH/4CH/SA/LGE 心腔分割 + 下载标签 &amp; NIfTI
+              <br>
+              🔹 <strong>疾病筛查</strong> - 心肌病分类 + 下载标签 &amp; NIfTI
+              <br>
+              🔹 <strong>NICM亚型分类</strong> - 非缺血性心肌病亚型 + 下载 NIfTI
+              <br>
+              🔹 <strong>医学报告</strong> - 心脏功能指标 + 下载 PDF 报告 &amp; NIfTI
+              <br>
+              🔹 <strong>医学问答</strong> - 心脏领域知识检索
+              <br>
+              🔹 <strong>智能对话</strong> - PNG/JPG 图像分析
+              <br><br>
+              📦 <strong>支持格式</strong>：
+              <br>• DCM 文件夹 → .zip &nbsp;|&nbsp; 医学影像 → .nii.gz &nbsp;|&nbsp; 图像 → .png, .jpg
+              <br><br>
+              📥 <strong>可下载内容</strong>：分割标签 (.nii.gz)、原始影像 (.nii.gz)、PDF 报告
+              <br><br>
+              请上传文件并描述您的需求！
+            </div>
+            <div class="message-meta">
+              <span>心脏MRI智能诊断Agent</span>
+              <span>•</span>
+              <span class="welcome-time"></span>
+            </div>
+          </div>
+        </template>
+
+        <div class="chat-input-area">
+          <div class="input-wrapper">
+            <textarea class="input-field" id="messageInput" placeholder="请输入您的问题..." rows="1"></textarea>
+            <button class="send-btn" id="sendBtn" disabled>➤</button>
+          </div>
+          <div class="quick-prompts">
+            <button class="quick-prompt" data-prompt="请分割这张心脏MRI图像中的心脏结构">分割</button>
+            <button class="quick-prompt" data-prompt="请对这些图像进行心肌病分类">疾病筛查</button>
+            <button class="quick-prompt" data-prompt="请对非缺血性心肌病进行亚型分类">NICM亚型</button>
+            <button class="quick-prompt" data-prompt="请生成一份心脏功能评估报告">报告生成</button>
+            <button class="quick-prompt" data-prompt="请识别这张图像的序列类型">序列识别</button>
+            <button class="quick-prompt" data-prompt="什么是扩张型心肌病？">医学问答</button>
+            <button class="quick-prompt" data-prompt="请描述这张图像中你看到的内容">图像描述</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js?v=36"></script>
+</body>
+
+</html>
