@@ -24,6 +24,12 @@ https://github.com/user-attachments/assets/74afd05a-eb6d-4bb0-8c08-ea6060283ba0
 
 
 
+https://github.com/user-attachments/assets/80a6ccbd-454a-417c-ba31-9561acab7065
+
+
+
+
+
 ### 3.2 疾病筛查
 
 
@@ -41,6 +47,13 @@ https://github.com/user-attachments/assets/3a862015-1379-408d-a938-aa76709ec111
 
 
 ### 3.4 医学报告生成
+
+
+
+
+https://github.com/user-attachments/assets/6197f861-50f7-4d30-904a-49ceece3b57b
+
+
 
 
 
